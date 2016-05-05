@@ -142,6 +142,7 @@ public class HTTP2Connection extends AbstractConnection
     protected class HTTP2Producer implements ExecutionStrategy.Producer
     {
         private ByteBuffer buffer;
+        private Callback _fillCallback = new FillCallback();
 
         @Override
         public Runnable produce()
@@ -167,7 +168,7 @@ public class HTTP2Connection extends AbstractConnection
 
                     task = tasks.poll();
                     if (LOG.isDebugEnabled())
-                        LOG.debug("Dequeued task {}", task);
+                        LOG.debug("Dequeued new task {}", task);
                     if (task != null)
                     {
                         release();
@@ -182,7 +183,7 @@ public class HTTP2Connection extends AbstractConnection
                 if (filled == 0)
                 {
                     release();
-                    fillInterested();
+                    getEndPoint().fillInterested(_fillCallback);
                     return null;
                 }
                 else if (filled < 0)
@@ -203,6 +204,27 @@ public class HTTP2Connection extends AbstractConnection
                 byteBufferPool.release(buffer);
                 buffer = null;
             }
+        }
+    }
+
+    private class FillCallback implements Callback
+    {
+        @Override
+        public void succeeded()
+        {
+            onFillable();
+        }
+
+        @Override
+        public void failed(Throwable x)
+        {
+            onFillInterestedFailed(x);
+        }
+
+        @Override
+        public boolean isNonBlocking()
+        {
+            return true;
         }
     }
 }

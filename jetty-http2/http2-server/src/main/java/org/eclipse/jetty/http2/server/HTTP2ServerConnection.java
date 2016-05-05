@@ -18,6 +18,7 @@
 
 package org.eclipse.jetty.http2.server;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +52,8 @@ import org.eclipse.jetty.util.BufferUtil;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.ConcurrentArrayQueue;
 import org.eclipse.jetty.util.TypeUtil;
+import org.eclipse.jetty.util.component.ContainerLifeCycle;
+import org.eclipse.jetty.util.component.Dumpable;
 import org.eclipse.jetty.util.thread.ExecutionStrategy;
 
 public class HTTP2ServerConnection extends HTTP2Connection implements Connection.UpgradeTo
@@ -187,7 +190,7 @@ public class HTTP2ServerConnection extends HTTP2Connection implements Connection
         return true;
     }
 
-    private class ServerHttpChannelOverHTTP2 extends HttpChannelOverHTTP2
+    private class ServerHttpChannelOverHTTP2 extends HttpChannelOverHTTP2 implements Dumpable
     {
         public ServerHttpChannelOverHTTP2(Connector connector, HttpConfiguration configuration, EndPoint endPoint, HttpTransportOverHTTP2 transport)
         {
@@ -200,6 +203,18 @@ public class HTTP2ServerConnection extends HTTP2Connection implements Connection
             super.onCompleted();
             recycle();
             channels.offer(this);
+        }
+
+        @Override
+        public String dump()
+        {
+            return ContainerLifeCycle.dump(this);
+        }
+
+        @Override
+        public void dump(Appendable out, String indent) throws IOException
+        {
+            ContainerLifeCycle.dump(out, indent, getRequest().getHttpInput().getQueue());
         }
     }
 }

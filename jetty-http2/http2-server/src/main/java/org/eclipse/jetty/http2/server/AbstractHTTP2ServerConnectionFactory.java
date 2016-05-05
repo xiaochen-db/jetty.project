@@ -23,6 +23,7 @@ import java.util.Objects;
 import org.eclipse.jetty.http2.BufferingFlowControlStrategy;
 import org.eclipse.jetty.http2.FlowControlStrategy;
 import org.eclipse.jetty.http2.HTTP2Connection;
+import org.eclipse.jetty.http2.SimpleFlowControlStrategy;
 import org.eclipse.jetty.http2.api.server.ServerSessionListener;
 import org.eclipse.jetty.http2.generator.Generator;
 import org.eclipse.jetty.http2.parser.ServerParser;
@@ -36,6 +37,7 @@ import org.eclipse.jetty.util.annotation.ManagedObject;
 import org.eclipse.jetty.util.annotation.Name;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.thread.ExecutionStrategy;
+import org.eclipse.jetty.util.thread.strategy.ProduceExecuteConsume;
 
 @ManagedObject
 public abstract class AbstractHTTP2ServerConnectionFactory extends AbstractConnectionFactory
@@ -46,8 +48,10 @@ public abstract class AbstractHTTP2ServerConnectionFactory extends AbstractConne
     private int initialStreamSendWindow = FlowControlStrategy.DEFAULT_WINDOW_SIZE;
     private int maxConcurrentStreams = -1;
     private int maxHeaderBlockFragment = 0;
-    private FlowControlStrategy.Factory flowControlStrategyFactory = () -> new BufferingFlowControlStrategy(0.5F);
-    private ExecutionStrategy.Factory executionStrategyFactory = ExecutionStrategy.Factory.getDefault();
+//    private FlowControlStrategy.Factory flowControlStrategyFactory = () -> new BufferingFlowControlStrategy(0.5F);
+    private FlowControlStrategy.Factory flowControlStrategyFactory = SimpleFlowControlStrategy::new;
+//    private ExecutionStrategy.Factory executionStrategyFactory = ExecutionStrategy.Factory.getDefault();
+    private ExecutionStrategy.Factory executionStrategyFactory = new ProduceExecuteConsume.Factory();
 
     public AbstractHTTP2ServerConnectionFactory(@Name("config") HttpConfiguration httpConfiguration)
     {

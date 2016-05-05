@@ -166,7 +166,7 @@ public class QueuedThreadPool extends AbstractLifeCycle implements SizedThreadPo
         if (size > 0)
         {
             Thread.yield();
-            
+
             if (LOG.isDebugEnabled())
             {
                 for (Thread unstopped : _threads)
@@ -193,7 +193,7 @@ public class QueuedThreadPool extends AbstractLifeCycle implements SizedThreadPo
     }
 
     /**
-     * Thread Pool should use Daemon Threading. 
+     * Thread Pool should use Daemon Threading.
      *
      * @param daemon true to enable delegation
      * @see Thread#setDaemon(boolean)
@@ -332,10 +332,10 @@ public class QueuedThreadPool extends AbstractLifeCycle implements SizedThreadPo
     {
         return _priority;
     }
-    
+
     /**
      * Get the size of the job queue.
-     * 
+     *
      * @return Number of jobs queued waiting for a thread
      */
     @ManagedAttribute("Size of the job queue")
@@ -346,7 +346,7 @@ public class QueuedThreadPool extends AbstractLifeCycle implements SizedThreadPo
 
     /**
      * Is thread pool using daemon threading
-     * 
+     *
      * @return true if delegating to named or anonymous pool
      * @see Thread#setDaemon(boolean)
      */
@@ -365,7 +365,7 @@ public class QueuedThreadPool extends AbstractLifeCycle implements SizedThreadPo
     {
         _detailedDump = detailedDump;
     }
-    
+
     @Override
     public void execute(Runnable job)
     {
@@ -428,7 +428,7 @@ public class QueuedThreadPool extends AbstractLifeCycle implements SizedThreadPo
     {
         return getThreads() - getIdleThreads();
     }
-    
+
     /**
      * @return True if the pool is at maxThreads and there are not more idle threads than queued jobs
      */
@@ -532,7 +532,7 @@ public class QueuedThreadPool extends AbstractLifeCycle implements SizedThreadPo
         }
 
         ContainerLifeCycle.dumpObject(out, this);
-        ContainerLifeCycle.dump(out, indent, dump);
+        ContainerLifeCycle.dump(out, indent, dump, getQueue());
     }
 
     @Override

@@ -245,7 +245,13 @@ public class HttpChannelOverHTTP2 extends HttpChannel
         boolean delayed = _delayedUntilContent;
         _delayedUntilContent = false;
 
-        return handle || delayed ? this : null;
+        if (delayed)
+            return this;
+
+        if (handle)
+            run();
+
+        return null;
     }
 
     /**

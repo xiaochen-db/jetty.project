@@ -62,6 +62,7 @@ import org.eclipse.jetty.util.LeakDetector;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.thread.Scheduler;
+import org.eclipse.jetty.util.thread.ThreadPool;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -86,7 +87,7 @@ public class HttpClientLoadTest extends AbstractTest
         ByteBufferPool byteBufferPool = new ArrayByteBufferPool();
         byteBufferPool = new LeakTrackingByteBufferPool(byteBufferPool);
         return new ServerConnector(server, null, null, byteBufferPool,
-                1, Math.min(1, cores / 2), provideServerConnectionFactory(transport));
+                1, 1/*Math.min(1, cores / 2)*/, provideServerConnectionFactory(transport));
     }
 
     @Override
@@ -202,11 +203,34 @@ public class HttpClientLoadTest extends AbstractTest
     {
         start(new LoadHandler());
 
-        int runs = 1;
-        int iterations = 256;
+        client.setByteBufferPool(new LeakTrackingByteBufferPool(new MappedByteBufferPool.Tagged()));
+        client.setMaxConnectionsPerDestination(1);
+        client.setMaxRequestsQueuedPerDestination(1024 * 1024);
+
+        int runs = 5;
+        int iterations = 512;
         IntStream.range(0, 16).parallel().forEach(i ->
                 IntStream.range(0, runs).forEach(j ->
                         run(iterations)));
+
+        MonitoringQueuedThreadPool serverThreads = (MonitoringQueuedThreadPool)server.getThreadPool();
+        System.err.printf("SERVER - Tasks = %d | Concurrent Threads max = %d | Queue Size max = %d | Queue Latency avg/max = %d/%d ms | Task Latency avg/max = %d/%d ms%n",
+                serverThreads.getTasks(),
+                serverThreads.getMaxActiveThreads(),
+                serverThreads.getMaxQueueSize(),
+                TimeUnit.NANOSECONDS.toMillis(serverThreads.getAverageQueueLatency()),
+                TimeUnit.NANOSECONDS.toMillis(serverThreads.getMaxQueueLatency()),
+                TimeUnit.NANOSECONDS.toMillis(serverThreads.getAverageTaskLatency()),
+                TimeUnit.NANOSECONDS.toMillis(serverThreads.getMaxTaskLatency()));
+        MonitoringQueuedThreadPool clientThreads = (MonitoringQueuedThreadPool)client.getExecutor();
+        System.err.printf("CLIENT - Tasks = %d | Concurrent Threads max = %d | Queue Size max = %d | Queue Latency avg/max = %d/%d ms | Task Latency avg/max = %d/%d ms%n",
+                clientThreads.getTasks(),
+                clientThreads.getMaxActiveThreads(),
+                clientThreads.getMaxQueueSize(),
+                TimeUnit.NANOSECONDS.toMillis(clientThreads.getAverageQueueLatency()),
+                TimeUnit.NANOSECONDS.toMillis(clientThreads.getMaxQueueLatency()),
+                TimeUnit.NANOSECONDS.toMillis(clientThreads.getAverageTaskLatency()),
+                TimeUnit.NANOSECONDS.toMillis(clientThreads.getMaxTaskLatency()));
     }
 
     private void run(int iterations)
@@ -220,7 +244,9 @@ public class HttpClientLoadTest extends AbstractTest
         final Thread testThread = Thread.currentThread();
         Scheduler.Task task = client.getScheduler().schedule(() ->
         {
-            logger.warn("Interrupting test, it is taking too long{}{}", System.lineSeparator(), client.dump());
+            logger.warn("Interrupting test, it is taking too long{}{}{}{}",
+                    System.lineSeparator(), server.dump(),
+                    System.lineSeparator(), client.dump());
             testThread.interrupt();
         }, iterations * factor, TimeUnit.MILLISECONDS);
 
@@ -246,7 +272,8 @@ public class HttpClientLoadTest extends AbstractTest
     {
         ThreadLocalRandom random = ThreadLocalRandom.current();
         // Choose a random destination
-        String host = random.nextBoolean() ? "localhost" : "127.0.0.1";
+//        String host = random.nextBoolean() ? "localhost" : "127.0.0.1";
+        String host = "localhost";
         // Choose a random method
         HttpMethod method = random.nextBoolean() ? HttpMethod.GET : HttpMethod.POST;
 
@@ -254,14 +281,17 @@ public class HttpClientLoadTest extends AbstractTest
 
         // Choose randomly whether to close the connection on the client or on the server
         boolean clientClose = false;
-        if (!ssl && random.nextBoolean())
+        if (!ssl && random.nextInt(100) < 5)
             clientClose = true;
         boolean serverClose = false;
-        if (!ssl && random.nextBoolean())
+        if (!ssl && random.nextInt(100) < 5)
             serverClose = true;
 
         int maxContentLength = 64 * 1024;
         int contentLength = random.nextInt(maxContentLength) + 1;
+//        int maxContentLength = 16;
+//        int contentLength = random.nextInt(maxContentLength) + 1;
+//        contentLength *= 1024 * 1024;
 
         test(getScheme(), host, method.asString(), clientClose, serverClose, contentLength, true, latch, failures);
     }
@@ -330,7 +360,13 @@ public class HttpClientLoadTest extends AbstractTest
             }
         });
         if (!await(requestLatch, 5, TimeUnit.SECONDS))
-            logger.warn("Request {} took too long", requestId);
+        {
+            logger.warn("Request {} took too long{}{}", requestId, System.lineSeparator(), server.dump());
+            MonitoringQueuedThreadPool threads = (MonitoringQueuedThreadPool)server.getThreadPool();
+            Runnable task = threads.getQueue().peek();
+            logger.info("TASK = " + task);
+            return;
+        }
     }
 
     private boolean await(CountDownLatch latch, long time, TimeUnit unit)

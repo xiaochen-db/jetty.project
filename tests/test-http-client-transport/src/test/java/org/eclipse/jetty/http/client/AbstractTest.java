@@ -55,7 +55,7 @@ public abstract class AbstractTest
     @Parameterized.Parameters(name = "transport: {0}")
     public static Object[] parameters() throws Exception
     {
-        return Transport.values();
+        return new Object[]{Transport.HTTP, Transport.H2C};
     }
 
     @Rule
@@ -87,10 +87,12 @@ public abstract class AbstractTest
         sslContextFactory.setTrustStorePassword("storepwd");
         sslContextFactory.setUseCipherSuitesOrder(true);
         sslContextFactory.setCipherComparator(HTTP2Cipher.COMPARATOR);
-        QueuedThreadPool serverThreads = new QueuedThreadPool();
+        QueuedThreadPool serverThreads = new MonitoringQueuedThreadPool(4);
         serverThreads.setName("server");
+        serverThreads.setDetailedDump(true);
         server = new Server(serverThreads);
         connector = newServerConnector(server);
+        connector.setPort(9191);
         server.addConnector(connector);
         server.setHandler(handler);
         server.start();
@@ -103,7 +105,7 @@ public abstract class AbstractTest
 
     private void startClient() throws Exception
     {
-        QueuedThreadPool clientThreads = new QueuedThreadPool();
+        QueuedThreadPool clientThreads = new MonitoringQueuedThreadPool(256);
         clientThreads.setName("client");
         client = newHttpClient(provideClientTransport(transport), sslContextFactory);
         client.setExecutor(clientThreads);

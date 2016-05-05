@@ -66,6 +66,14 @@ public class HttpInput extends ServletInputStream implements Runnable
             _blockingTimeoutAt=0;
     }
 
+    public Deque<Content> getQueue()
+    {
+        synchronized (_inputQ)
+        {
+            return new ArrayDeque<>(_inputQ);
+        }
+    }
+
     protected HttpChannelState getHttpChannelState()
     {
         return _channelState;
