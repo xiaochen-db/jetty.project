@@ -439,17 +439,15 @@ public class HttpChannel implements Runnable, HttpOutput.Interceptor
 
                     case COMPLETE:
                     {
-                        // TODO do onComplete here for continuations to work
-//                        _state.onComplete();
-
                         if (!_response.isCommitted() && !_request.isHandled())
                             _response.sendError(404);
+                        else if (!_response.isContentComplete(_response.getHttpOutput().getWritten()))
+                            _transport.abort(new IOException("insufficient content written"));
                         else
                             _response.closeOutput();
                         _request.setHandled(true);
 
-                        // TODO do onComplete here to detect errors in final flush
-                         _state.onComplete();
+                        _state.onComplete();
 
                         onCompleted();
 

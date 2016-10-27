@@ -919,13 +919,13 @@ public class Response implements HttpServletResponse
         if (isCommitted() || isIncluding())
             return;
 
-        _contentLength = len;
-        if (_contentLength > 0)
+        if (len>0)
         {
             long written = _out.getWritten();
             if (written > len)
                 throw new IllegalArgumentException("setContentLength(" + len + ") when already written " + written);
-            
+
+            _contentLength = len;
             _fields.putLongField(HttpHeader.CONTENT_LENGTH, len);
             if (isAllContentWritten(written))
             {
@@ -939,15 +939,19 @@ public class Response implements HttpServletResponse
                 }
             }
         }
-        else if (_contentLength==0)
+        else if (len==0)
         {
             long written = _out.getWritten();
             if (written > 0)
                 throw new IllegalArgumentException("setContentLength(0) when already written " + written);
+            _contentLength = len;
             _fields.put(HttpHeader.CONTENT_LENGTH, "0");
         }
         else
+        {
+            _contentLength = len;
             _fields.remove(HttpHeader.CONTENT_LENGTH);
+        }
     }
     
     public long getContentLength()
@@ -958,6 +962,11 @@ public class Response implements HttpServletResponse
     public boolean isAllContentWritten(long written)
     {
         return (_contentLength >= 0 && written >= _contentLength);
+    }
+    
+    public boolean isContentComplete(long written)
+    {
+        return (_contentLength < 0 || written >= _contentLength);
     }
 
     public void closeOutput() throws IOException
