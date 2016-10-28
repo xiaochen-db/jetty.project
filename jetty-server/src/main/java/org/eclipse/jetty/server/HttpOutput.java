@@ -646,6 +646,7 @@ public class HttpOutput extends ServletOutputStream implements Runnable
         if (LOG.isDebugEnabled())
             LOG.debug("sendContent({})", BufferUtil.toDetailString(content));
 
+        _written += content.remaining();
         write(content, true);
         closed();
     }
@@ -727,6 +728,7 @@ public class HttpOutput extends ServletOutputStream implements Runnable
         if (LOG.isDebugEnabled())
             LOG.debug("sendContent(buffer={},{})", BufferUtil.toDetailString(content), callback);
 
+        _written += content.remaining();
         write(content, true, new Callback.Nested(callback)
         {
             @Override
@@ -1245,6 +1247,7 @@ public class HttpOutput extends ServletOutputStream implements Runnable
             // write what we have
             _buffer.position(0);
             _buffer.limit(len);
+            _written += len;
             write(_buffer, _eof, this);
             return Action.SCHEDULED;
         }
@@ -1303,6 +1306,7 @@ public class HttpOutput extends ServletOutputStream implements Runnable
 
             // write what we have
             BufferUtil.flipToFlush(_buffer, 0);
+            _written += _buffer.remaining();
             write(_buffer, _eof, this);
 
             return Action.SCHEDULED;
