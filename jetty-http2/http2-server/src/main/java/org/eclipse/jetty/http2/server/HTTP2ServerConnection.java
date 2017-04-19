@@ -260,18 +260,19 @@ public class HTTP2ServerConnection extends HTTP2Connection implements Connection
 
     private void offerChannel(HttpChannelOverHTTP2 channel)
     {
-        synchronized (this)
-        {
-            channels.offer(channel);
-        }
+//        synchronized (this)
+//        {
+//            channels.offer(channel);
+//        }
     }
 
     private HttpChannelOverHTTP2 pollChannel()
     {
-        synchronized (this)
-        {
-            return channels.poll();
-        }
+//        synchronized (this)
+//        {
+//            return channels.poll();
+//        }
+        return null;
     }
 
     public boolean upgrade(Request request)
