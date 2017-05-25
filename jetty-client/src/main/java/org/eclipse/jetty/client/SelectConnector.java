@@ -20,6 +20,7 @@ package org.eclipse.jetty.client;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.net.StandardSocketOptions;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.UnresolvedAddressException;
@@ -71,6 +72,8 @@ class SelectConnector extends AggregateLifeCycle implements HttpClient.Connector
         try
         {
             channel = SocketChannel.open();
+            // We need to set additional socket options for Databricks environment
+            setDatabricksSocketOptions(channel);
             Address address = destination.isProxied() ? destination.getProxy() : destination.getAddress();
             channel.socket().setTcpNoDelay(true);
 
@@ -103,6 +106,14 @@ class SelectConnector extends AggregateLifeCycle implements HttpClient.Connector
             destination.onConnectionFailed(ex);
         }
     }
+
+     /**
+      * [CJ-11646] We need to enable TCP KeepAlive on sockets so that long running connections
+      * with infrequent activities will not be timeout by AWS NAT gateway.
+      */
+     private void setDatabricksSocketOptions(SocketChannel channel) throws IOException {
+         channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
+     }
 
     /* ------------------------------------------------------------ */
     class Manager extends SelectorManager
