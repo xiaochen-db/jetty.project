@@ -64,6 +64,12 @@ public class ContentExchange extends CachedExchange
         return null;
     }
 
+    public synchronized long getResponseContentSize() {
+        if (_responseContent != null)
+            return _responseContent.size();
+        return 0;
+    }
+
     @Override
     protected synchronized void onResponseStatus(Buffer version, int status, Buffer reason) throws IOException
     {
