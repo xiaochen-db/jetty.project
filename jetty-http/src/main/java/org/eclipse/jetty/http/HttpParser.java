@@ -171,6 +171,14 @@ public class HttpParser implements Parser
         return isState(STATE_END);
     }
 
+    public String getDebugString() {
+        return "state=" + _state  + ",length=" + _length + ",contentPosition=" + _contentPosition +
+                ",contentLength=" + _contentLength + ",persistent=" + _persistent +
+                ",responseStatus=" + _responseStatus + ",chunkLength=" + _chunkLength +
+                ",chunkPosition=" + _chunkPosition + ",headResponse=" + _headResponse + ",eol=" +
+                _eol + ",isComplete=" + isComplete();
+    }
+
     /* ------------------------------------------------------------ */
     public boolean isMoreInBuffer()
     throws IOException

@@ -188,6 +188,14 @@ public class AsyncHttpConnection extends AbstractHttpConnection implements Async
 
                     if (complete)
                     {
+                        HttpExchange exchangeSnapshot = _exchange;
+                        if (exchangeSnapshot != null) {
+                            String debugString = "failed=" + failed + ",generatorComplete=" +
+                                _generator.isComplete() + ", parser=[" +
+                                _parser.getDebugString() + "]";
+                            exchangeSnapshot.setDebugString(debugString);
+                        }
+
                         boolean persistent = !failed && _parser.isPersistent() && _generator.isPersistent();
                         _generator.setPersistent(persistent);
                         reset();

@@ -126,6 +126,8 @@ public class HttpExchange
     boolean _onResponseCompleteDone;
     boolean _onDone; // == onConnectionFail || onException || onExpired || onCancelled || onResponseCompleted && onRequestCompleted
 
+    private String _debugString = "none";
+
     protected void expire(HttpDestination destination)
     {
         AbstractHttpConnection connection = _connection;
@@ -143,6 +145,14 @@ public class HttpExchange
     public int getStatus()
     {
         return _status.get();
+    }
+
+    public void setDebugString(String debugString) {
+        _debugString = debugString;
+    }
+
+    public String get_debugString() {
+        return _debugString;
     }
 
     /**
