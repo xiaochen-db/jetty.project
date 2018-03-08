@@ -188,10 +188,12 @@ public class AsyncHttpConnection extends AbstractHttpConnection implements Async
 
                     if (complete)
                     {
+                        // Record debug information about the exchange to debug
+                        // https://databricks.atlassian.net/browse/es-5287
                         HttpExchange exchangeSnapshot = _exchange;
                         if (exchangeSnapshot != null) {
                             String debugString = "failed=" + failed + ",generatorComplete=" +
-                                _generator.isComplete() + ", parser=[" +
+                                _generator.isComplete() + ",parser=[" +
                                 _parser.getDebugString() + "]";
                             exchangeSnapshot.setDebugString(debugString);
                         }

@@ -126,6 +126,7 @@ public class HttpExchange
     boolean _onResponseCompleteDone;
     boolean _onDone; // == onConnectionFail || onException || onExpired || onCancelled || onResponseCompleted && onRequestCompleted
 
+    // Information to debug https://databricks.atlassian.net/browse/es-5287
     private String _debugString = "none";
 
     protected void expire(HttpDestination destination)
@@ -151,7 +152,7 @@ public class HttpExchange
         _debugString = debugString;
     }
 
-    public String get_debugString() {
+    public String getDebugString() {
         return _debugString;
     }
 
