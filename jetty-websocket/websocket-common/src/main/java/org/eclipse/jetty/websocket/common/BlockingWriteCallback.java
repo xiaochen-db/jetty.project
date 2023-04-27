@@ -37,7 +37,12 @@ public class BlockingWriteCallback extends SharedBlockingCallback
     {
         return new WriteBlocker(acquire());
     }
-    
+    protected long getIdleTimeout()
+    {
+        // 60 seconds
+        return 60000;
+    }
+
     public static class WriteBlocker implements WriteCallback, Callback.NonBlocking, AutoCloseable
     {
         private final Blocker blocker;
