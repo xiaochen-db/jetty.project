@@ -38,6 +38,7 @@ public class BlockingWriteCallback extends SharedBlockingCallback
         return new WriteBlocker(acquire());
     }
 
+    @Override
     protected long getIdleTimeout()
     {
         // Timeout if sending message takes more than 30 sec
